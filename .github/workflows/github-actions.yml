@@ -21,9 +21,9 @@ jobs:
         # with:
         #   mysql-version: '8.0'
       - run: npm i -D
-      - run: mysql -h 127.0.0.1 --port 3306 -u root -ptest -e 'CREATE DATABASE IF NOT EXISTS Test;'
-      - run: mysql -h 127.0.0.1 -u root -ptest Test -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'test';FLUSH PRIVILEGES;"
-      - run: mysql -h 127.0.0.1 -u root -ptest Test < test/migration.sql
+      - run: mysql -h localhost --port 3306 -u root -ptest -e 'CREATE DATABASE IF NOT EXISTS Test;'
+      - run: mysql -h localhost -u root -ptest Test -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'test';FLUSH PRIVILEGES;"
+      - run: mysql -h localhost -u root -ptest Test < test/migration.sql
       - run: make ci
       # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
