@@ -21,7 +21,8 @@ jobs:
         # with:
         #   mysql-version: '8.0'
       - run: npm i -D
-      - run: mysql -h 127.0.0.1 --port 3306 -u root -ptest -e 'CREATE DATABASE IF NOT EXISTS test;'
+      - run: mysql -h 127.0.0.1 --port 3306 -u root -ptest -e 'CREATE DATABASE IF NOT EXISTS Test;'
+      - run: mysql -h 127.0.0.1 -u root -ptest Test < test/migration.sql'
       - run: make ci
       # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"

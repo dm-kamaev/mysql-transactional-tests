@@ -6,8 +6,6 @@ interface IQueryFunction {
   <T = unknown>(options: string | mysql.QueryOptions, values?: any): Promise<T>;
 }
 
-export const dbName = 'Fi_analyze';
-
 interface IPoolConnection extends mysql.PoolConnection {
   q: IQueryFunction;
 }

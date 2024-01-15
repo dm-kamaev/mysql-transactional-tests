@@ -1,4 +1,4 @@
-CREATE TABLE employee(
+CREATE TABLE Test.employee(
   id int unsigned NOT NULL AUTO_INCREMENT,
   first_name varchar(255) NOT NULL,
   last_name CHAR(255) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE employee(
   PRIMARY KEY (`id`)
 );
 
-INSERT INTO employee VALUES
+INSERT INTO Test.employee VALUES
    (DEFAULT, 'Ivan', 'Ivanov', 19, 'man', 2000),
    (DEFAULT, 'Lisa', 'Summer', 20, 'woman', 7000),
    (DEFAULT, 'Victoria', 'Brown', 25, 'man', 5000);

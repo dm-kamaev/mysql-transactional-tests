@@ -1,10 +1,11 @@
 import { patchMySQL } from '../../src/index';
-import MySQLClient, { dbName } from '../mysql_client';
+import MySQLClient from '../mysql_client';
 const mysqlConfig = require('../mysql.config.json');
 
 describe('[mysql]: queries', () => {
   let mysqlClient: MySQLClient;
   let unPatchMySQL, rollback;
+  const dbName = mysqlConfig.database;
 
   beforeEach(() => {
     ({ unPatchMySQL, rollback } = patchMySQL());
