@@ -1,17 +1,27 @@
 name: Build
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
+  deployment:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: test
+        ports:
+            - '8888:3306'
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
           node-version: '20'
-      - uses: shogo82148/actions-setup-mysql@v1
-        with:
-          mysql-version: '8.0'
+      # - uses: shogo82148/actions-setup-mysql@v1
+        # with:
+        #   mysql-version: '8.0'
       - run: npm i -D
+      - run: mysql -h 127.0.0.1 --port 3306 -u root -ptest -e 'CREATE DATABASE IF NOT EXISTS test;'
       - run: make ci
       # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"

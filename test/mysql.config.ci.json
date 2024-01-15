@@ -1,6 +1,6 @@
 {
   "host": "127.0.0.1",
+  "user": "root",
   "password": "test",
-  "user": "test",
   "port": 3306
 }
