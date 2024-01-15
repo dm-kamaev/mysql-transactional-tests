@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "lib": [
+      "es2022",
+    ],
+    "types": [
+      "node",
+      "jest"
+    ],
+    "outDir": "dist",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "strict": true,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "strictPropertyInitialization": false,
+    "allowJs": false,
+    "declaration": false,
+    "sourceMap": true
+  },
+  "ts-node": {
+    "files": true
+  },
+  // "files": [
+  //   "./global.d.ts"
+  // ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
