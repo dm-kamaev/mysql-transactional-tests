@@ -1,5 +1,5 @@
 import { patchMySQL } from '../../src/index';
-import MySQLClient from '../mysql_client';
+import MySQLClient from '../client/mysql_client';
 const mysqlConfig = require('../mysql.config.json');
 
 describe('[mysql]: queries', () => {

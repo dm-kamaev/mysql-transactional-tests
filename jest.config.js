@@ -7,6 +7,9 @@ module.exports = {
 
   bail: 1,
   verbose: true,
+  testPathIgnorePatterns: ['dist'],
+  coveragePathIgnorePatterns: ['test/client'],
   // automock: false,
   // setupFilesAfterEnv: ['./test/jest-setup.ts'],
+  coverageReporters: ['json-summary', 'json-summary', 'text', 'lcov']
 };

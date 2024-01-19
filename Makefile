@@ -1,9 +1,16 @@
-publish:
+publish: test_coverage build
 	npm publish --access public;
+
+test_coverage:
+	npx jest --coverage
+
+test_badge: test_coverage
+	npx jest-coverage-badges
 
 ci: check_ts
 	mv test/mysql.config.ci.json test/mysql.config.json;
-	make test;
+	make test_coverage;
+	make build;
 
 check_ts:
 	npx tsc --noEmit;
@@ -11,8 +18,8 @@ check_ts:
 test:
 	npx jest;
 
-# build: check_ts
-# 	rm -rf dist;
-# 	npx tsc
+build:
+	rm -rf dist;
+	npx tsc
 
 .PHONY: test

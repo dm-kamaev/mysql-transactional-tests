@@ -21,12 +21,6 @@
     "declaration": false,
     "sourceMap": true
   },
-  "ts-node": {
-    "files": true
-  },
-  // "files": [
-  //   "./global.d.ts"
-  // ],
   "exclude": [
     "node_modules",
     "dist"
