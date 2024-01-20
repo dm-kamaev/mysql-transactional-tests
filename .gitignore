@@ -1,3 +1,5 @@
 .env
 node_modules
+*.html
+*.info
 mysql.config.json

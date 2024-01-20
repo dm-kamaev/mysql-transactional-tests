@@ -20,7 +20,7 @@ export function patchMySQL({ isolationLevel, onQuery: inputOnQuery }: { isolatio
   // let connection: PoolConnection | undefined;
   let pool: mysql.Pool | undefined;
   let getConnectionOrigin: (callback: (err: mysql.MysqlError, connection: mysql.PoolConnection) => void) => void | undefined;
-  let trx: Trx | undefined;
+  let connectionWithTrx: mysql.PoolConnection | undefined;
   let releaseOrigin: () => void | undefined;
   let rollbackOrigin: {
   (options?: mysql.QueryOptions | undefined, callback?: ((err: mysql.MysqlError) => void) | undefined): void;
@@ -45,10 +45,10 @@ export function patchMySQL({ isolationLevel, onQuery: inputOnQuery }: { isolatio
     let queryOrigin: mysql.QueryFunction | undefined;
 
     pool.getConnection = async function (cb) {
-      if (!trx) {
-        trx = await createTrx(getConnectionOrigin, isolationLevel);
+      if (!connectionWithTrx) {
+        connectionWithTrx = await createTrx(getConnectionOrigin, isolationLevel);
 
-        const connection = trx.connection;
+        const connection = connectionWithTrx;
 
         // save origin method
         releaseOrigin = connection.release;
@@ -61,25 +61,25 @@ export function patchMySQL({ isolationLevel, onQuery: inputOnQuery }: { isolatio
         rollbackOrigin = connection.rollback.bind(connection);
         queryOrigin = connection.query.bind(connection);
 
-        trx.connection.query = function (...input) {
+        connectionWithTrx.query = function (...input) {
           onQuery(input[0]);
           console.log('[Connection]: query: ', input[0]);
           const sql = input[0] && input[0].__sql__;
           if (sql) {
             input[0].sql = sql;
           }
-          return queryOrigin!.apply(trx!.connection, input as any);
+          return queryOrigin!.apply(connectionWithTrx, input as any);
         };
       }
 
-      const new_connection = {} as mysql.PoolConnection;
-      const keys = getAllPropsOfObj(trx.connection);
+      const newConnection = {} as mysql.PoolConnection;
+      const keys = getAllPropsOfObj(connectionWithTrx);
       keys.forEach(el => {
-        new_connection[el] = trx?.connection[el];
+        newConnection[el] = connectionWithTrx![el];
       });
 
-      new_connection.beginTransaction = function (...input: [options?: mysql.QueryOptions, callback?: (err: mysql.MysqlError) => void] | [callback: (err: mysql.MysqlError) => void]) {
-        if (!trx) {
+      newConnection.beginTransaction = function (...input: [options?: mysql.QueryOptions, callback?: (err: mysql.MysqlError) => void] | [callback: (err: mysql.MysqlError) => void]) {
+        if (!connectionWithTrx) {
           throw new Error('Not found transaction');
         }
 
@@ -87,7 +87,7 @@ export function patchMySQL({ isolationLevel, onQuery: inputOnQuery }: { isolatio
         const output = addCustomSql('savepoint', input, savepointId);
         let isStartedTrx = false;
 
-        new_connection.query = function (...input) {
+        newConnection.query = function (...input) {
           if (!isStartedTrx) {
             onQuery(output[0] as mysql.QueryOptions);
             console.log('[Fake transaction]: Query', output[0]);
@@ -100,7 +100,7 @@ export function patchMySQL({ isolationLevel, onQuery: inputOnQuery }: { isolatio
               isStartedTrx = true;
               onQuery(input[0]);
               console.log('[Fake transaction]: Query', input[0]);
-              return queryOrigin!.apply(trx!.connection, input as any);
+              return queryOrigin!.apply(connectionWithTrx, input as any);
             });
           }
           onQuery(input[0]);
@@ -109,26 +109,26 @@ export function patchMySQL({ isolationLevel, onQuery: inputOnQuery }: { isolatio
           if (sql) {
             input[0].sql = sql;
           }
-          return queryOrigin!.apply(trx!.connection, input as any);
+          return queryOrigin!.apply(connectionWithTrx, input as any);
         };
 
-        new_connection.commit = function (...input: QueryOptions) {
+        newConnection.commit = function (...input: QueryOptions) {
           console.log('==== FAKE commit ====');
           const output = addCustomSql('release', input, savepointId);
-          return new_connection.query.apply(trx!.connection, output as any);
+          return newConnection.query.apply(connectionWithTrx, output as any);
         };
 
-        new_connection.rollback = function (...input: QueryOptions) {
+        newConnection.rollback = function (...input: QueryOptions) {
           console.log('===== FAKE rollback =====');
           const output = addCustomSql('rollback', input, savepointId);
-          return new_connection.query.apply(trx!.connection, output as any);
+          return newConnection.query.apply(connectionWithTrx, output as any);
         };
 
         const cb: any = input.at(-1)!;
         return cb();
       };
 
-      return cb(null as unknown as mysql.MysqlError, new_connection);
+      return cb(null as unknown as mysql.MysqlError, newConnection);
     };
 
     return pool;
@@ -140,11 +140,11 @@ export function patchMySQL({ isolationLevel, onQuery: inputOnQuery }: { isolatio
       if (pool) {
         pool.getConnection = getConnectionOrigin;
       }
-      trx = undefined;
+      connectionWithTrx = undefined;
     },
     async rollback() {
-      if (trx) {
-        trx.connection.release = releaseOrigin;
+      if (connectionWithTrx) {
+        connectionWithTrx.release = releaseOrigin;
       }
       if (rollbackOrigin) {
         const rollback = rollbackOrigin;
@@ -155,7 +155,7 @@ export function patchMySQL({ isolationLevel, onQuery: inputOnQuery }: { isolatio
         });
         rollbackOrigin = undefined;
       }
-      trx = undefined;
+      connectionWithTrx = undefined;
     },
   };
 }
@@ -180,37 +180,13 @@ async function createTrx(
       });
     });
   }
-  return new Promise<Trx>((resolve, reject) => {
+  return new Promise<mysql.PoolConnection>((resolve, reject) => {
     connection.beginTransaction(err => {
-      err ? reject(err) : resolve(new Trx(connection));
+      err ? reject(err) : resolve(connection);
     });
   });
 }
 
-
-class Trx {
-  private readonly rollback_origin: (callback: (err: mysql.MysqlError) => void) => void | ((options?: mysql.QueryOptions, callback?: (err: mysql.MysqlError) => void) => void);
-  constructor(public readonly connection: mysql.PoolConnection) {
-    this.rollback_origin = this.connection.rollback.bind(this.connection);
-  }
-
-  rollback() {
-    const connection = this.connection;
-    return new Promise<void>((resolve, reject) => {
-      this.rollback_origin(function () {
-        // console.dir(connection, { depth: 4, colors: true });
-        try {
-          connection.release();
-        } catch (err: any) {
-          if (!/Connection\s+already\s+released/i.test(err.message)) {
-            return reject(err);
-          }
-        }
-        resolve();
-      });
-    });
-  }
-}
 
 function addCustomSql(commandType: 'savepoint' | 'release' | 'rollback', input: QueryOptions, savepointId: number): QueryOptionsOut {
   let command: 'SAVEPOINT' | 'RELEASE SAVEPOINT' | 'ROLLBACK TO SAVEPOINT';
