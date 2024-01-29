@@ -1,19 +1,13 @@
-import { patchMySQL } from '../../src/index';
+import { startTransaction, unPatch } from '../../src/index';
 import MySQLClient from '../client/mysql_client';
 const mysqlConfig = require('../mysql.config.json');
 
 describe('[mysql]: queries with transaction', () => {
   let mysqlClient: MySQLClient;
-  let unPatchMySQL, rollback;
+  let rollback;
   const dbName = mysqlConfig.database;
 
-  // beforeAll(() => {
-  //   ({ unPatchMySQL, rollback } = patchMySQL());
-  //   mysqlClient = new MySQLClient(mysqlConfig);
-  // });
-
   beforeEach(() => {
-    ({ unPatchMySQL, rollback } = patchMySQL());
     mysqlClient = new MySQLClient(mysqlConfig);
   });
 
@@ -21,9 +15,13 @@ describe('[mysql]: queries with transaction', () => {
     mysqlClient.close();
   });
 
+  afterAll(() => {
+    unPatch();
+  });
 
 
   it('insert: commit', async () => {
+    ({ rollback } = await startTransaction());
     const trx = await mysqlClient.beginTransaction();
     await trx.query(`INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`);
     await trx.commit();
@@ -32,7 +30,6 @@ describe('[mysql]: queries with transaction', () => {
     console.log('select all', result);
     expect(result).toHaveLength(4);
     await rollback();
-    unPatchMySQL();
 
     const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
     console.log('result 2', result2);
@@ -41,6 +38,7 @@ describe('[mysql]: queries with transaction', () => {
   });
 
   it('insert: rollback', async () => {
+    ({ rollback } = await startTransaction());
     const trx = await mysqlClient.beginTransaction();
     await trx.query(`INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`);
     await trx.rollback();
@@ -49,7 +47,6 @@ describe('[mysql]: queries with transaction', () => {
     console.log('select all', result);
     expect(result).toHaveLength(3);
     await rollback();
-    unPatchMySQL();
 
     const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
     console.log('result 2', result2);
@@ -58,6 +55,7 @@ describe('[mysql]: queries with transaction', () => {
   });
 
   it('insert: two parallel transcation, one commit, one rollback', async () => {
+    ({ rollback } = await startTransaction());
     const trx1 = await mysqlClient.beginTransaction();
     const trx2 = await mysqlClient.beginTransaction();
 
@@ -75,7 +73,6 @@ describe('[mysql]: queries with transaction', () => {
     expect(not_found).toHaveLength(0);
 
     await rollback();
-    unPatchMySQL();
 
     const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
     console.log('result 2', result2);
