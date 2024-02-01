@@ -1,4 +1,4 @@
-import { startTransaction } from '../src/index';
+import { startTransaction } from '../src/mysql';
 import knex from 'knex';
 const mysqlConfig = require('../test/mysql.config.json');
 

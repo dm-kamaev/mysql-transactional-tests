@@ -1,4 +1,4 @@
-import { startTransaction, unPatch } from '../../src/index';
+import { startTransaction, unPatch } from '../../src/mysql';
 import MySQLClient from '../client/mysql_client';
 const mysqlConfig = require('../mysql.config.json');
 

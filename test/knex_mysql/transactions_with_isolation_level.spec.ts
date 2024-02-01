@@ -1,6 +1,6 @@
-import { startTransaction, unPatch } from '../../src/index';
+import { startTransaction, unPatch } from '../../src/mysql';
 import type knex from 'knex';
-import knexClient from '../client/knex_client';
+import knexClient from '../client/knex_mysql_client';
 const mysqlConfig = require('../mysql.config.json');
 
 

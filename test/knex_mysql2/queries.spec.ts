@@ -1,9 +1,9 @@
-import { startTransaction, unPatch } from '../../src/index';
+import { startTransaction, unPatch } from '../../src/mysql2';
 import type knex from 'knex';
-import knexClient from '../client/knex_client';
+import knexClient from '../client/knex_mysql2_client';
 const mysqlConfig = require('../mysql.config.json');
 
-describe('[knex mysql]: queries', () => {
+describe('[knex mysql2]: queries', () => {
   let mysqlClient: knex.Knex<any, unknown[]>;
   let rollback;
 
