@@ -97,7 +97,7 @@ mysql.createPool = function (config: string | mysql.PoolConfig) {
         return newConnection.query.apply(connectionWithTrx, output as any);
       };
 
-      const cb: any = input.at(-1)!;
+      const cb = input.at(-1)! as ((err?: mysql.MysqlError) => void);
       return cb();
     };
 

@@ -4,7 +4,7 @@ import knexClient from '../client/knex_mysql_client';
 const mysqlConfig = require('../mysql.config.json');
 
 
-describe('[knex mysql]: queries with transaction', () => {
+describe('[knex mysql]: transaction isolation level', () => {
   let mysqlClient: knex.Knex<any, unknown[]>;
   let rollback;
   const isolationLevel = 'repeatable read';

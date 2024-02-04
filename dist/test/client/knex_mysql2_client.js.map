@@ -1,0 +1,1 @@
+{"version":3,"file":"knex_mysql2_client.js","sourceRoot":"","sources":["../../../test/client/knex_mysql2_client.ts"],"names":[],"mappings":";;;;;AAAA,gDAAwB;AAExB,mBAAyB,MAAM;IAC7B,OAAO,IAAA,cAAI,EAAC;QACV,MAAM,EAAE,QAAQ;QAChB,UAAU,EAAE,MAAM;QAClB,IAAI,EAAE,EAAE,GAAG,EAAE,CAAC,EAAE,GAAG,EAAE,CAAC,EAAE;KACzB,CAAC,CAAC;AACL,CAAC;AAND,4BAMC;AAAA,CAAC"}

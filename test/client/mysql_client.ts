@@ -44,8 +44,15 @@ export default class MySQLClient {
     return output;
   }
 
-  async beginTransaction() {
+  async beginTransaction({ isolationLevel }: { isolationLevel?: 'REPEATABLE READ' | 'SERIALIZABLE' | 'READ COMMITTED' | 'READ UNCOMMITTED' } = {}) {
     const connection = await this.getConnection();
+
+     if (isolationLevel) {
+      await new Promise<void>((resolve, reject) => {
+        connection.query(`SET TRANSACTION ISOLATION LEVEL ${isolationLevel}`, (err) => err ? reject(err) : resolve());
+      });
+    }
+
     return new Promise<Trx>((resolve, reject) => {
       connection.beginTransaction(err => {
         if (err) {

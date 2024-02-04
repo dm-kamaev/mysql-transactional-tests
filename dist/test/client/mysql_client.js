@@ -30,8 +30,13 @@ class MySQLClient {
         };
         return output;
     }
-    async beginTransaction() {
+    async beginTransaction({ isolationLevel } = {}) {
         const connection = await this.getConnection();
+        if (isolationLevel) {
+            await new Promise((resolve, reject) => {
+                connection.query(`SET TRANSACTION ISOLATION LEVEL ${isolationLevel}`, (err) => err ? reject(err) : resolve());
+            });
+        }
         return new Promise((resolve, reject) => {
             connection.beginTransaction(err => {
                 if (err) {

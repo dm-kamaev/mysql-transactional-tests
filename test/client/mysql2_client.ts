@@ -1,15 +1,7 @@
 import mysql from 'mysql2';
 
-// interface IQueryFunction {
-//   <T = unknown>(query: mysql.Query): Promise<T>;
-//   <T = unknown>(options: string | mysql.QueryOptions): Promise<T>;
-//   <T = unknown>(options: string | mysql.QueryOptions, values?: any): Promise<T>;
-// }
 
-// interface IPoolConnection extends mysql.PoolConnection {
-//   q: IQueryFunction;
-// }
-
+// type Rows = mysql.OkPacket | mysql.RowDataPacket[] | mysql.ResultSetHeader[] | mysql.RowDataPacket[][] | mysql.OkPacket[] | mysql.ProcedureCallPacket;
 export default class MySQL2Client {
   private readonly _pool: mysql.Pool;
 
@@ -18,47 +10,33 @@ export default class MySQL2Client {
   }
 
 
-  query(options: string | mysql.QueryOptions, values?: any) {
-    return new Promise((resolve, reject) => {
+  query<T>(options: string | mysql.QueryOptions, values?: any): Promise<T[]> {
+    return new Promise<T[]>((resolve, reject) => {
       if (typeof options === 'string') {
         this._pool.query(options, values, function (err, rows, _fields) {
-          err ? reject(err) : resolve(rows);
+          err ? reject(err) : resolve(rows as T[]);
         });
       } else {
         this._pool.query(options, values, function (err, rows, _fields) {
-          err ? reject(err) : resolve(rows);
+          err ? reject(err) : resolve(rows as T[]);
         });
       }
     });
   }
 
-  // async getConnection(): Promise<IPoolConnection> {
-  //   const connection = await new Promise<mysql.PoolConnection>((resolve, reject) => {
-  //     this._pool.getConnection(function (err, connection) {
-  //       return err ? reject(err) : resolve(connection);
-  //     });
-  //   });
-
-  //   const output = connection as unknown as IPoolConnection;
-  //   output.q = function query<T = unknown>(options: string | mysql.QueryOptions, values?: any): Promise<T> {
-  //     return new Promise<T>((resolve, reject) => {
-  //       connection.query(options, values, (err, rows) => {
-  //         connection.release();
-  //         err ? reject(err) : resolve(rows);
-  //       });
-  //     });
-  //   };
-
-  //   return output;
-  // }
-
-  async beginTransaction() {
+  async beginTransaction({ isolationLevel }: { isolationLevel?: 'REPEATABLE READ' | 'SERIALIZABLE' | 'READ COMMITTED' | 'READ UNCOMMITTED' } = {}) {
     const connection = await new Promise<mysql.PoolConnection>((resolve, reject) => {
       this._pool.getConnection(function (err, connection) {
         return err ? reject(err) : resolve(connection);
       });
     });
-    // const connection = await this.getConnection();
+
+    if (isolationLevel) {
+      await new Promise<void>((resolve, reject) => {
+        connection.query(`SET TRANSACTION ISOLATION LEVEL ${isolationLevel}`, (err) => err ? reject(err) : resolve());
+      });
+    }
+
     return new Promise<Trx>((resolve, reject) => {
       connection.beginTransaction(err => {
         if (err) {
@@ -161,14 +139,14 @@ class Trx {
 }
 
 
-const mysqlConfig = require('../mysql.config.json');
-void async function () {
-  const mysqlClient = new MySQL2Client(mysqlConfig);
-  const result = await mysqlClient.query(`SELECT * FROM employee`);
-  console.log(result);
+// const mysqlConfig = require('../mysql.config.json');
+// void async function () {
+//   const mysqlClient = new MySQL2Client(mysqlConfig);
+//   const result = await mysqlClient.query(`SELECT * FROM employee`);
+//   console.log(result);
 
-  const trx = await mysqlClient.beginTransaction();
-  await trx.query(`INSERT INTO ${mysqlConfig.database}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`);
-  await trx.rollback();
-  mysqlClient.close();
-}();
+//   const trx = await mysqlClient.beginTransaction();
+//   await trx.query(`INSERT INTO ${mysqlConfig.database}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`);
+//   await trx.rollback();
+//   mysqlClient.close();
+// }();
