@@ -60,7 +60,6 @@ describe('[knex mysql2]: queries with transaction', () => {
         console.log('select all', result);
         expect(result).toHaveLength(3);
         await rollback();
-        // unPatchMySQL();
         const result2 = await mysqlClient('employee').select(`*`);
         console.log('result 2', result2);
         expect(result2).toHaveLength(3);
@@ -80,7 +79,6 @@ describe('[knex mysql2]: queries with transaction', () => {
             console.log('select all', result);
             expect(result).toHaveLength(3);
             await rollback();
-            // unPatchMySQL();
             const result2 = await mysqlClient('employee').select(`*`);
             console.log('result 2', result2);
             expect(result2).toHaveLength(3);
@@ -101,7 +99,6 @@ describe('[knex mysql2]: queries with transaction', () => {
         const not_found = await mysqlClient('employee').select(`*`).where('first_name', '=', 'Test2').limit(1);
         expect(not_found).toHaveLength(0);
         await rollback();
-        // unPatchMySQL();
         const result2 = await mysqlClient('employee').select(`*`);
         console.log('result 2', result2);
         expect(result2).toHaveLength(3);

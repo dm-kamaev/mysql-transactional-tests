@@ -32,6 +32,22 @@ mysql2_1.default.createPool = function (config) {
         keys.forEach(el => {
             newConnection[el] = connectionWithTrx[el];
         });
+        newConnection.query = function (...input) {
+            const firstParam = input[0];
+            const sql = (typeof firstParam === 'string' ? firstParam : firstParam.sql).trim().toUpperCase();
+            const cb = input.at(-1);
+            if (sql.startsWith('BEGIN') || sql.startsWith('START TRANSACTION')) {
+                newConnection.beginTransaction(cb);
+                return this;
+            }
+            else if (/TRANSACTION\s+ISOLATION\s+LEVEL/.test(sql)) {
+                cb();
+                return this;
+            }
+            else {
+                return queryTrx.apply(connectionWithTrx, input);
+            }
+        };
         newConnection.beginTransaction = function (...input) {
             if (!connectionWithTrx) {
                 throw new Error('Not found transaction');
@@ -56,13 +72,26 @@ mysql2_1.default.createPool = function (config) {
                         return queryTrx.apply(connectionWithTrx, input);
                     });
                 }
-                options.onQuery(input[0]);
-                console.log('[Fake transaction]: Query', input[0]);
-                const sql = input[0] && input[0].__sql__;
-                if (sql) {
-                    input[0].sql = sql;
+                const firstParam = input[0];
+                options.onQuery(firstParam);
+                console.log('[Fake transaction]: Query', firstParam);
+                const __sql__ = firstParam && firstParam.__sql__;
+                if (__sql__) {
+                    firstParam.sql = __sql__;
                 }
-                return queryTrx.apply(connectionWithTrx, input);
+                const sql = (typeof firstParam === 'string' ? firstParam : firstParam.sql).trim().toUpperCase();
+                const cb = input.at(-1);
+                if (sql.startsWith('COMMIT')) {
+                    newConnection.commit(cb);
+                    return this;
+                }
+                else if (/^ROLLBACK$/.test(sql)) { // maybe confict with "ROLLBACK TO SAVEPOINT sp_1"
+                    newConnection.rollback(cb);
+                    return this;
+                }
+                else {
+                    return queryTrx.apply(connectionWithTrx, input);
+                }
             };
             newConnection.commit = function (...input) {
                 console.log('==== FAKE commit ====');
@@ -227,14 +256,14 @@ async function initTrx({ connectionConfig } = {}) {
         if (__sql__) {
             firstParam.sql = __sql__;
         }
-        const sql = typeof firstParam === 'string' ? firstParam : firstParam.sql;
+        const sql = (typeof firstParam === 'string' ? firstParam : firstParam.sql).trim().toUpperCase();
         if (/TRANSACTION\s+ISOLATION\s+LEVEL/.test(sql)) {
             input.at(-1)();
             return this;
         }
         else {
             options.onQuery(firstParam);
-            console.log('[Connection]: query: 2222 ', firstParam);
+            console.log('[Connection]: query: ', firstParam);
             return queryTrx.apply(connectionWithTrx, input);
         }
     };
