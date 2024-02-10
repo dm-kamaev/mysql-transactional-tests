@@ -17,22 +17,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '20'
-      # - uses: shogo82148/actions-setup-mysql@v1
-        # with:
-        #   mysql-version: '8.0'
       - run: npm i -D
       - run: mysql -h 127.0.0.1 --port 3306 -u root -ptest -e 'CREATE DATABASE IF NOT EXISTS Test;'
       - run: mysql -h 127.0.0.1 -u root -ptest Test < test/migration.sql
       - run: mysql -h 127.0.0.1 -u root -ptest Test -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'test';FLUSH PRIVILEGES;"
       - run: make ci
-      # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      # - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      # - name: Check out repository code
-      #   uses: actions/checkout@v2
-      # - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      # - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      # - name: List files in the repository
-      #   run: |
-      #     ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."

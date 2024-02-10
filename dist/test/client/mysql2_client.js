@@ -99,7 +99,6 @@ class Trx {
                         });
                     }
                     else {
-                        console.log('Call resolve');
                         connection.release();
                         resolve();
                     }

@@ -36,5 +36,8 @@
     "ts-jest": "29.1.1",
     "tsx": "4.7.0",
     "typescript": "5.3.3"
+  },
+  "dependencies": {
+    "sequelize": "6.36.0"
   }
 }

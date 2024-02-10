@@ -111,7 +111,6 @@ class Trx {
                 return reject(err);
               });
           } else {
-            console.log('Call resolve');
             connection.release();
             resolve();
           }
