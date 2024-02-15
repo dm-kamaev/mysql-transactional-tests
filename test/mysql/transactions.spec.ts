@@ -25,16 +25,13 @@ describe('[mysql]: queries with transaction', () => {
     const trx = await mysqlClient.beginTransaction();
     await trx.query(`INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`);
     await trx.commit();
-    console.log('After commit');
     const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-    console.log('select all', result);
     expect(result).toHaveLength(4);
+
     await rollback();
 
     const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-    console.log('result 2', result2);
     expect(result2).toHaveLength(3);
-    console.log(result2);
   });
 
   it('insert: rollback', async () => {
@@ -42,16 +39,13 @@ describe('[mysql]: queries with transaction', () => {
     const trx = await mysqlClient.beginTransaction();
     await trx.query(`INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`);
     await trx.rollback();
-    console.log('After commit');
     const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-    console.log('select all', result);
     expect(result).toHaveLength(3);
+
     await rollback();
 
     const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-    console.log('result 2', result2);
     expect(result2).toHaveLength(3);
-    console.log(result2);
   });
 
   it('insert: two parallel transcation, one commit, one rollback', async () => {
@@ -66,7 +60,6 @@ describe('[mysql]: queries with transaction', () => {
     await trx1.commit();
 
     const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-    console.log('select all', result);
     expect(result).toHaveLength(4);
 
     const not_found = await mysqlClient.query(`SELECT * FROM ${dbName}.employee WHERE first_name='Test2' LIMIT 1`);
@@ -75,9 +68,7 @@ describe('[mysql]: queries with transaction', () => {
     await rollback();
 
     const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-    console.log('result 2', result2);
     expect(result2).toHaveLength(3);
-    console.log(result2);
   });
 
   // it('insert: two parallel transcation, one commit, one rollback. inverse close', async () => {

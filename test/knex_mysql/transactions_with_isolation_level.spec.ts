@@ -31,16 +31,13 @@ describe('[knex mysql]: transaction isolation level', () => {
     const trx = await mysqlClient.transaction({ isolationLevel });
     await trx('employee').insert({ first_name: 'Test', last_name: 'Test', age: 35, sex: 'man', income: 23405 });
     await trx.commit();
-    console.log('After commit');
     const result = await mysqlClient('employee').select(`*`);
-    console.log('select all', result);
     expect(result).toHaveLength(4);
+
     await rollback();
 
     const result2 = await mysqlClient('employee').select(`*`);
-    console.log('result 2', result2);
     expect(result2).toHaveLength(3);
-    console.log(result2);
   });
 
    it('insert: commit (cb trx)', async () => {
@@ -48,18 +45,13 @@ describe('[knex mysql]: transaction isolation level', () => {
     await mysqlClient.transaction(async (trx) => {
       await trx('employee').insert({ first_name: 'Test', last_name: 'Test', age: 35, sex: 'man', income: 23405 });
     }, { isolationLevel });
-    console.log('After commit');
     const result = await mysqlClient('employee').select(`*`);
-    console.log('select all', result);
     expect(result).toHaveLength(4);
 
     await rollback();
-    // unPatchMySQL();
 
     const result2 = await mysqlClient('employee').select(`*`);
-    console.log('result 2', result2);
     expect(result2).toHaveLength(3);
-    console.log(result2);
   });
 
   it('insert: rollback', async () => {
@@ -67,17 +59,13 @@ describe('[knex mysql]: transaction isolation level', () => {
     const trx = await mysqlClient.transaction({ isolationLevel });
     await trx('employee').insert({ first_name: 'Test', last_name: 'Test', age: 35, sex: 'man', income: 23405 });
     await trx.rollback();
-    console.log('After commit');
     const result =  await mysqlClient('employee').select(`*`);
-    console.log('select all', result);
     expect(result).toHaveLength(3);
+
     await rollback();
-    // unPatchMySQL();
 
     const result2 = await mysqlClient('employee').select(`*`);
-    console.log('result 2', result2);
     expect(result2).toHaveLength(3);
-    console.log(result2);
   });
 
   it('insert: rollback (cb trx)', async () => {
@@ -88,17 +76,13 @@ describe('[knex mysql]: transaction isolation level', () => {
         throw Error('Test Rollback');
       }, { isolationLevel });
     } catch (err) {
-      console.log('After commit');
       const result =  await mysqlClient('employee').select(`*`);
-      console.log('select all', result);
       expect(result).toHaveLength(3);
+
       await rollback();
-      // unPatchMySQL();
 
       const result2 = await mysqlClient('employee').select(`*`);
-      console.log('result 2', result2);
       expect(result2).toHaveLength(3);
-      console.log(result2);
     }
   });
 
@@ -114,19 +98,15 @@ describe('[knex mysql]: transaction isolation level', () => {
     await trx1.commit();
 
     const result = await mysqlClient('employee').select(`*`);
-    console.log('select all', result);
     expect(result).toHaveLength(4);
 
     const not_found = await mysqlClient('employee').select(`*`).where('first_name', '=', 'Test2').limit(1);
     expect(not_found).toHaveLength(0);
 
     await rollback();
-    // unPatchMySQL();
 
     const result2 = await mysqlClient('employee').select(`*`);
-    console.log('result 2', result2);
     expect(result2).toHaveLength(3);
-    console.log(result2);
   });
 
 });

@@ -13,7 +13,7 @@ class MySQLClient {
         const connection = await this.getConnection();
         return await connection.q(options, values);
     }
-    async getConnection() {
+    async getConnection(connectionOptions = { autoRelease: true }) {
         const connection = await new Promise((resolve, reject) => {
             this._pool.getConnection(function (err, connection) {
                 return err ? reject(err) : resolve(connection);
@@ -23,7 +23,9 @@ class MySQLClient {
         output.q = function query(options, values) {
             return new Promise((resolve, reject) => {
                 connection.query(options, values, (err, rows) => {
-                    connection.release();
+                    if (connectionOptions.autoRelease) {
+                        connection.release();
+                    }
                     err ? reject(err) : resolve(rows);
                 });
             });
