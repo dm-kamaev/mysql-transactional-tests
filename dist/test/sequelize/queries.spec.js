@@ -11,7 +11,7 @@ describe('[sequelize]: queries', () => {
     let EmployeeModel;
     let rollback;
     beforeEach(async () => {
-        ({ sequelize: mysqlClient, EmployeeModel } = await (0, sequelize_client_1.default)({ ...mysqlConfig, debug: false }));
+        ({ sequelize: mysqlClient, EmployeeModel } = await (0, sequelize_client_1.default)({ ...mysqlConfig }));
     });
     afterEach(async () => {
         await mysqlClient.close();

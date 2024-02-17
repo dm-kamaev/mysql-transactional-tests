@@ -3,4 +3,5 @@ node_modules
 *.html
 *.info
 coverage/lcov-report
+temp
 mysql.config.json

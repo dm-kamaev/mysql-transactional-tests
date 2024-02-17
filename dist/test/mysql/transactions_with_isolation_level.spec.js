@@ -28,30 +28,22 @@ describe('[mysql2]: transaction with isolation level', () => {
         const trx = await mysqlClient.beginTransaction({ isolationLevel });
         await trx.query(`INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`);
         await trx.commit();
-        console.log('After commit');
         const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-        console.log('select all', result);
         expect(result).toHaveLength(4);
         await rollback();
         const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-        console.log('result 2', result2);
         expect(result2).toHaveLength(3);
-        console.log(result2);
     });
     it('insert: rollback', async () => {
         ({ rollback } = await (0, mysql_1.startTransaction)());
         const trx = await mysqlClient.beginTransaction({ isolationLevel });
         await trx.query(`INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`);
         await trx.rollback();
-        console.log('After commit');
         const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-        console.log('select all', result);
         expect(result).toHaveLength(3);
         await rollback();
         const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-        console.log('result 2', result2);
         expect(result2).toHaveLength(3);
-        console.log(result2);
     });
     it('insert: two parallel transcation, one commit, one rollback', async () => {
         ({ rollback } = await (0, mysql_1.startTransaction)());
@@ -62,15 +54,12 @@ describe('[mysql2]: transaction with isolation level', () => {
         await trx2.rollback();
         await trx1.commit();
         const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-        console.log('select all', result);
         expect(result).toHaveLength(4);
         const not_found = await mysqlClient.query(`SELECT * FROM ${dbName}.employee WHERE first_name='Test2' LIMIT 1`);
         expect(not_found).toHaveLength(0);
         await rollback();
         const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-        console.log('result 2', result2);
         expect(result2).toHaveLength(3);
-        console.log(result2);
     });
 });
 //# sourceMappingURL=transactions_with_isolation_level.spec.js.map

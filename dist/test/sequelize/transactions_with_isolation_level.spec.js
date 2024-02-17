@@ -35,7 +35,7 @@ describe('[sequelize]: transaction with isolation level', () => {
     // const isolationLevel = Transaction.ISOLATION_LEVELS.READ_COMMITTED;
     // const isolationLevel = Transaction.ISOLATION_LEVELS.SERIALIZABLE;
     beforeEach(async () => {
-        ({ sequelize: mysqlClient, EmployeeModel } = await (0, sequelize_client_1.default)({ ...mysqlConfig, debug: false }));
+        ({ sequelize: mysqlClient, EmployeeModel } = await (0, sequelize_client_1.default)({ ...mysqlConfig }));
     });
     afterEach(async () => {
         await mysqlClient.close();

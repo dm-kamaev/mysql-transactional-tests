@@ -12,7 +12,7 @@ describe('[sequelize]: transaction with isolation level', () => {
   // const isolationLevel = Transaction.ISOLATION_LEVELS.SERIALIZABLE;
 
   beforeEach(async () => {
-    ({ sequelize: mysqlClient, EmployeeModel } = await sequelizeClient({ ...mysqlConfig, debug: false }));
+    ({ sequelize: mysqlClient, EmployeeModel } = await sequelizeClient({ ...mysqlConfig  }));
   });
 
   afterEach(async () => {

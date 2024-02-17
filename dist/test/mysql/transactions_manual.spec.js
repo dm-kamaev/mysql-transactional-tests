@@ -44,7 +44,6 @@ describe('[mysql]: queries with transaction (manual)', () => {
         expect(result2).toHaveLength(3);
     });
     it('insert: two parallel transcation, one commit, one rollback', async () => {
-        (0, mysql_1.setDebug)(true);
         ({ rollback } = await (0, mysql_1.startTransaction)());
         const connection1 = await mysqlClient.getConnection({ autoRelease: false });
         const connection2 = await mysqlClient.getConnection({ autoRelease: false });
