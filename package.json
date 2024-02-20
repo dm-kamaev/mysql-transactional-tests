@@ -1,12 +1,21 @@
 {
   "name": "mysql-transactional-tests",
-  "version": "0.0.1",
-  "description": "",
+  "version": "1.0.0",
+  "description": "Wraps each test in transaction for mysql database (driver `mysql` and `mysql2`)",
   "main": "dist/index.js",
   "scripts": {
     "test": "make test"
   },
-  "keywords": [],
+  "keywords": [
+    "mysql",
+    "mysql2",
+    "transactional tests",
+    "mysql transactional tests",
+    "mysql2 transactional tests",
+    "mysql test",
+    "mysql2 test",
+    "test"
+  ],
   "author": "",
   "license": "ISC",
   "peerDependenciesMeta": {
@@ -36,12 +45,12 @@
     "kysely": "0.27.2",
     "mysql": "2.18.1",
     "mysql2": "3.9.1",
+    "reflect-metadata": "0.2.1",
     "ts-jest": "29.1.1",
     "ts-node": "10.9.2",
     "tsx": "4.7.0",
-    "typescript": "5.3.3"
-  },
-  "dependencies": {
+    "typeorm": "0.3.20",
+    "typescript": "5.3.3",
     "sequelize": "6.36.0"
   }
 }

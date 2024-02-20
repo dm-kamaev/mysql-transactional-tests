@@ -21,5 +21,6 @@ test:
 build:
 	rm -rf dist;
 	npx tsc
+	rm -rf dist/test dist/example;
 
 .PHONY: test

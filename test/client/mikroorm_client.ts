@@ -7,7 +7,7 @@ export type EM = SqlEntityManager<MySqlDriver>;
 
 export default async function mikroORMClient(config) {
   const orm = await MikroORM.init({
-    entities: ['test/client/*.entity.ts'],
+    entities: ['test/client/*.mikroorm.entity.ts'],
     metadataProvider: TsMorphMetadataProvider,
     clientUrl: `mysql://${config.user}:${config.password}@${config.host}:${config.port}/${config.database}`,
     debug: false,

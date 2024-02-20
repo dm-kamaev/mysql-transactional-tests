@@ -11,7 +11,7 @@ const createPoolOrigin = mysql_1.default.createPool;
 const createConnectionOrigin = mysql_1.default.createConnection;
 let pool;
 let getConnectionOrigin;
-let connectionWithTrx;
+let globalTrxConnection;
 let releaseOrigin;
 let rollbackOrigin;
 let queryTrx;
@@ -25,21 +25,21 @@ mysql_1.default.createPool = function (config) {
         if (!transactionStarted) {
             return getConnectionOrigin(cb);
         }
-        if (!connectionWithTrx) {
-            await initTrx();
+        if (!globalTrxConnection) {
+            await initGlobalTrx();
         }
-        const newConnection = {};
+        const proxyConnection = {};
         // Rest operator can't copy properties from prototype of object
-        const keys = getAllPropsOfObj(connectionWithTrx);
+        const keys = getAllPropsOfObj(globalTrxConnection);
         keys.forEach(el => {
-            newConnection[el] = connectionWithTrx[el];
+            proxyConnection[el] = globalTrxConnection[el];
         });
-        newConnection.query = function (...input) {
+        proxyConnection.query = function (...input) {
             const firstParam = input[0];
             const sql = (typeof firstParam === 'string' ? firstParam : firstParam.sql).trim().toUpperCase();
             const cb = input.at(-1);
             if (sql.startsWith('BEGIN') || sql.startsWith('START TRANSACTION')) {
-                newConnection.beginTransaction(cb);
+                proxyConnection.beginTransaction(cb);
                 return this;
             }
             else if (/TRANSACTION\s+ISOLATION\s+LEVEL/.test(sql)) {
@@ -47,19 +47,20 @@ mysql_1.default.createPool = function (config) {
                 return this;
             }
             else {
-                return queryTrx.apply(connectionWithTrx, input);
+                return queryTrx.apply(globalTrxConnection, input);
             }
         };
-        newConnection.beginTransaction = function (...input) {
-            if (!connectionWithTrx) {
+        proxyConnection.beginTransaction = function (...input) {
+            if (!globalTrxConnection) {
                 throw new Error('Not found transaction');
             }
             const savepointId = counterSavepointId++;
             const output = addCustomSql('savepoint', input, savepointId);
             // We will start transaction (call "savepoint") when first query was triggered
-            let isStartedTrx = false;
-            newConnection.query = function (...input) {
-                if (!isStartedTrx) {
+            let isTrxBegun = false;
+            proxyConnection.query = function (...input) {
+                // if transaction not begun then executed "begin" or "start transaction" and call neccessary sql query
+                if (!isTrxBegun) {
                     options.onQuery(output[0]);
                     logger('[Fake transaction]: Query', output[0]);
                     const sql = output[0] && typeof output[0] !== 'string' && typeof output[0] !== 'function' && output[0].__sql__;
@@ -68,10 +69,10 @@ mysql_1.default.createPool = function (config) {
                             const cb = input.at(-1);
                             return cb(err);
                         }
-                        isStartedTrx = true;
+                        isTrxBegun = true;
                         options.onQuery(input[0]);
                         logger('[Fake transaction]: Query', input[0]);
-                        return queryTrx.apply(connectionWithTrx, input);
+                        return queryTrx.apply(globalTrxConnection, input);
                     });
                 }
                 const firstParam = input[0];
@@ -84,31 +85,31 @@ mysql_1.default.createPool = function (config) {
                 const sql = (typeof firstParam === 'string' ? firstParam : firstParam.sql).trim().toUpperCase();
                 const cb = input.at(-1);
                 if (sql.startsWith('COMMIT')) {
-                    newConnection.commit(cb);
+                    proxyConnection.commit(cb);
                     return this;
                 }
                 else if (/^ROLLBACK$/.test(sql)) { // maybe confict with "ROLLBACK TO SAVEPOINT sp_1"
-                    newConnection.rollback(cb);
+                    proxyConnection.rollback(cb);
                     return this;
                 }
                 else {
-                    return queryTrx.apply(connectionWithTrx, input);
+                    return queryTrx.apply(globalTrxConnection, input);
                 }
             };
-            newConnection.commit = function (...input) {
+            proxyConnection.commit = function (...input) {
                 logger('==== FAKE commit ====');
                 const output = addCustomSql('release', input, savepointId);
-                return newConnection.query.apply(connectionWithTrx, output);
+                return proxyConnection.query.apply(globalTrxConnection, output);
             };
-            newConnection.rollback = function (...input) {
+            proxyConnection.rollback = function (...input) {
                 logger('===== FAKE rollback =====');
                 const output = addCustomSql('rollback', input, savepointId);
-                return newConnection.query.apply(connectionWithTrx, output);
+                return proxyConnection.query.apply(globalTrxConnection, output);
             };
             const cb = input.at(-1);
             return cb();
         };
-        return cb(null, newConnection);
+        return cb(null, proxyConnection);
     };
     return pool;
 };
@@ -120,8 +121,8 @@ mysql_1.default.createConnection = function (uri) {
             return queryOrigin.apply(connection, input);
         }
         let p = Promise.resolve();
-        if (!connectionWithTrx) {
-            p = p.then(() => initTrx({ connectionConfig: uri }));
+        if (!globalTrxConnection) {
+            p = p.then(() => initGlobalTrx({ connectionConfig: uri }));
         }
         const sql = typeof input[0] === 'string' ? input[0] : input[0].sql;
         p.then(() => {
@@ -129,7 +130,7 @@ mysql_1.default.createConnection = function (uri) {
                 connection.beginTransaction(input.at(-1));
             }
             else {
-                connectionWithTrx.query.apply(connectionWithTrx, input);
+                globalTrxConnection.query.apply(globalTrxConnection, input);
             }
         }).catch(err => console.error('createConnection: ', err));
         return this;
@@ -140,33 +141,34 @@ mysql_1.default.createConnection = function (uri) {
             return beginTransactionOrigin.apply(connection, input);
         }
         let p = Promise.resolve();
-        if (!connectionWithTrx) {
-            p = p.then(() => initTrx({ connectionConfig: uri }));
+        if (!globalTrxConnection) {
+            p = p.then(() => initGlobalTrx({ connectionConfig: uri }));
         }
         const savepointId = counterSavepointId++;
         const output = addCustomSql('savepoint', input, savepointId);
         // We will start transaction (call "savepoint") when first query was triggered
-        let isStartedTrx = false;
+        let isTrxBegun = false;
         connection.query = function (...input) {
             if (!transactionStarted) {
                 return queryOrigin.apply(connection, input);
             }
             const firstParam = input[0];
             const cb = input.at(-1);
-            const queryTrx = connectionWithTrx.query;
-            if (!isStartedTrx) {
+            const queryGlobalTrx = globalTrxConnection.query;
+            // if transaction not begun then executed "begin" or "start transaction" and call neccessary sql query
+            if (!isTrxBegun) {
                 const firstParamForBeginTransaction = output[0];
                 options.onQuery(firstParamForBeginTransaction);
                 logger('[Fake transaction]: Query', output[0]);
                 const sql = firstParamForBeginTransaction && typeof firstParamForBeginTransaction !== 'string' && typeof firstParamForBeginTransaction !== 'function' && firstParamForBeginTransaction.__sql__;
-                return queryTrx(sql, (err) => {
+                return queryGlobalTrx(sql, (err) => {
                     if (err) {
                         return cb(err);
                     }
-                    isStartedTrx = true;
+                    isTrxBegun = true;
                     options.onQuery(firstParam);
                     logger('[Fake transaction]: Query', firstParam);
-                    return queryTrx.apply(connectionWithTrx, input);
+                    return queryGlobalTrx.apply(globalTrxConnection, input);
                 });
             }
             const __sql__ = firstParam && firstParam.__sql__;
@@ -185,18 +187,18 @@ mysql_1.default.createConnection = function (uri) {
             else {
                 options.onQuery(firstParam);
                 logger('[Fake transaction]: Query', firstParam);
-                return queryTrx.apply(connectionWithTrx, input);
+                return queryGlobalTrx.apply(globalTrxConnection, input);
             }
         };
         connection.commit = function (...input) {
             logger('==== FAKE commit ====');
             const output = addCustomSql('release', input, savepointId);
-            return connectionWithTrx.query.apply(connectionWithTrx, output);
+            return globalTrxConnection.query.apply(globalTrxConnection, output);
         };
         connection.rollback = function (...input) {
             logger('===== FAKE rollback =====');
             const output = addCustomSql('rollback', input, savepointId);
-            return connectionWithTrx.query.apply(connectionWithTrx, output);
+            return globalTrxConnection.query.apply(globalTrxConnection, output);
         };
         const cb = input.at(-1);
         return p.then(() => cb());
@@ -211,9 +213,9 @@ async function startTransaction({ isolationLevel, onQuery } = {}) {
     transactionStarted = true;
     return {
         async rollback() {
-            logger("🚀 ~ rollback ~ connectionWithTrx:", Boolean(connectionWithTrx));
-            if (connectionWithTrx) {
-                connectionWithTrx.release = releaseOrigin;
+            logger("🚀 ~ rollback ~ globalTrxConnection:", Boolean(globalTrxConnection));
+            if (globalTrxConnection) {
+                globalTrxConnection.release = releaseOrigin;
             }
             logger("🚀 ~ rollback ~ rollbackOrigin:", Boolean(rollbackOrigin));
             if (rollbackOrigin) {
@@ -225,8 +227,8 @@ async function startTransaction({ isolationLevel, onQuery } = {}) {
                 });
                 rollbackOrigin = undefined;
             }
-            connectionWithTrx?.destroy();
-            connectionWithTrx = undefined;
+            globalTrxConnection?.destroy();
+            globalTrxConnection = undefined;
             transactionStarted = false;
         },
     };
@@ -238,7 +240,7 @@ function unPatch() {
     if (pool) {
         pool.getConnection = getConnectionOrigin;
     }
-    connectionWithTrx = undefined;
+    globalTrxConnection = undefined;
     transactionStarted = false;
 }
 exports.unPatch = unPatch;
@@ -246,16 +248,16 @@ function setDebug(debugMode) {
     DEBUG = debugMode;
 }
 exports.setDebug = setDebug;
-async function initTrx({ connectionConfig } = {}) {
-    connectionWithTrx = await createTrx(!connectionConfig ? { getConnection: getConnectionOrigin } : { createConnection: () => createConnectionOrigin(connectionConfig) }, options.isolationLevel);
+async function initGlobalTrx({ connectionConfig } = {}) {
+    globalTrxConnection = await createGlobalTrx(!connectionConfig ? { getConnection: getConnectionOrigin } : { createConnection: () => createConnectionOrigin(connectionConfig) }, options.isolationLevel);
     // save origin method
-    releaseOrigin = connectionWithTrx.release;
+    releaseOrigin = globalTrxConnection.release;
     // disable release
-    connectionWithTrx.release = () => undefined;
+    globalTrxConnection.release = () => undefined;
     // save origin methods
-    rollbackOrigin = connectionWithTrx.rollback.bind(connectionWithTrx);
-    queryTrx = connectionWithTrx.query.bind(connectionWithTrx);
-    connectionWithTrx.query = function (...input) {
+    rollbackOrigin = globalTrxConnection.rollback.bind(globalTrxConnection);
+    queryTrx = globalTrxConnection.query.bind(globalTrxConnection);
+    globalTrxConnection.query = function (...input) {
         const firstParam = input[0];
         const __sql__ = firstParam && firstParam.__sql__;
         if (__sql__) {
@@ -269,11 +271,11 @@ async function initTrx({ connectionConfig } = {}) {
         else {
             options.onQuery(firstParam);
             logger('[Connection]: query: ', firstParam);
-            return queryTrx.apply(connectionWithTrx, input);
+            return queryTrx.apply(globalTrxConnection, input);
         }
     };
 }
-async function createTrx(input, isolationLevel) {
+async function createGlobalTrx(input, isolationLevel) {
     let connection;
     if (input.getConnection) {
         const getConnection = input.getConnection;

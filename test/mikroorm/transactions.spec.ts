@@ -1,5 +1,5 @@
 import { startTransaction, unPatch } from '../../src/mysql2';
-import { Employee } from '../client/Employee.entity';
+import { Employee } from '../client/Employee.mikroorm.entity';
 import mikroORMClient, { EM } from '../client/mikroorm_client';
 const mysqlConfig = require('../mysql.config.json');
 
