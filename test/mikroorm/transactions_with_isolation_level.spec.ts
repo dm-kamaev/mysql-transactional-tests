@@ -1,8 +1,8 @@
 import { startTransaction, unPatch } from '../../src/mysql2';
 import { Employee } from '../client/Employee.mikroorm.entity';
 import mikroORMClient, { EM, IsolationLevel } from '../client/mikroorm_client';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mysqlConfig = require('../mysql.config.json');
-
 
 describe('[mikroorm]: transaction with isolation level', () => {
   let mysqlClient: EM;
@@ -22,11 +22,9 @@ describe('[mikroorm]: transaction with isolation level', () => {
     await orm.close();
   });
 
-
   afterAll(() => {
     unPatch();
   });
-
 
   it('insert: commit', async () => {
     ({ rollback } = await startTransaction());
@@ -49,17 +47,20 @@ describe('[mikroorm]: transaction with isolation level', () => {
     expect(result2).toHaveLength(3);
   });
 
-   it('insert: commit (cb trx)', async () => {
+  it('insert: commit (cb trx)', async () => {
     ({ rollback } = await startTransaction());
-    await mysqlClient.transactional(async (em) => {
-      const employee = new Employee();
-      employee.first_name = 'Test';
-      employee.last_name = 'Test';
-      employee.age = 35;
-      employee.sex = 'man';
-      employee.income = 23405;
-      em.persist(employee);
-    }, { isolationLevel });
+    await mysqlClient.transactional(
+      async (em) => {
+        const employee = new Employee();
+        employee.first_name = 'Test';
+        employee.last_name = 'Test';
+        employee.age = 35;
+        employee.sex = 'man';
+        employee.income = 23405;
+        em.persist(employee);
+      },
+      { isolationLevel },
+    );
 
     const result = await mysqlClient.findAll(Employee, {});
     expect(result).toHaveLength(4);
@@ -95,18 +96,21 @@ describe('[mikroorm]: transaction with isolation level', () => {
   it('insert: rollback (cb trx)', async () => {
     ({ rollback } = await startTransaction());
     try {
-      await mysqlClient.transactional(async (em) => {
-        const employee = new Employee();
-        employee.first_name = 'Test';
-        employee.last_name = 'Test';
-        employee.age = 35;
-        employee.sex = 'man';
-        employee.income = 23405;
-        em.persist(employee);
-        throw Error('Test Rollback');
-      }, { isolationLevel });
+      await mysqlClient.transactional(
+        async (em) => {
+          const employee = new Employee();
+          employee.first_name = 'Test';
+          employee.last_name = 'Test';
+          employee.age = 35;
+          employee.sex = 'man';
+          employee.income = 23405;
+          em.persist(employee);
+          throw new Error('Test Rollback');
+        },
+        { isolationLevel },
+      );
     } catch (err) {
-      const result =  await mysqlClient.findAll(Employee, {});
+      const result = await mysqlClient.findAll(Employee, {});
       expect(result).toHaveLength(3);
 
       await rollback();
@@ -115,5 +119,4 @@ describe('[mikroorm]: transaction with isolation level', () => {
       expect(result2).toHaveLength(3);
     }
   });
-
 });

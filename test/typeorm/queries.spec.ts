@@ -1,6 +1,7 @@
 import { startTransaction, unPatch } from '../../src/mysql';
 import { Employee } from '../client/Employee.typeorm.entity';
 import typeORMClient, { DataSource } from '../client/typeorm_client';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mysqlConfig = require('../mysql.config.json');
 
 describe('[typeorm]: queries', () => {
@@ -42,12 +43,12 @@ describe('[typeorm]: queries', () => {
   it('update', async () => {
     ({ rollback } = await startTransaction());
     const employeeRepo = mysqlClient.getRepository(Employee);
-    const result = await employeeRepo.find({  where: { first_name: 'Lisa' } });
+    const result = await employeeRepo.find({ where: { first_name: 'Lisa' } });
     const { id, age } = result[0];
     expect(result).toHaveLength(1);
     await employeeRepo.increment({ id }, 'age', 1);
     const result2 = await employeeRepo.find({ where: { first_name: 'Lisa' } });
-    expect(result2[0].age).toBe(age+1);
+    expect(result2[0].age).toBe(age + 1);
 
     await rollback();
 
@@ -67,5 +68,4 @@ describe('[typeorm]: queries', () => {
     const result2 = await employeeRepo.find();
     expect(result2).toHaveLength(3);
   });
-
 });

@@ -1,26 +1,67 @@
 import { startTransaction, unPatch } from '../../src/mysql2';
-import kyselyClient, { KyselyClient } from '../client/kysely_client';
+import kyselyClient from '../client/kysely_client';
+import { sql } from 'kysely';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const mysqlConfig = require('../mysql.config.json');
 
-describe('[kysely]: queries with transaction', () => {
-  let mysqlClient: KyselyClient;
-  let rollback;
+const mysqlClient = kyselyClient(mysqlConfig);
 
-  beforeEach(() => {
-    mysqlClient = kyselyClient(mysqlConfig);
+describe('[kysely]: transaction per test', () => {
+  let rollback: () => Promise<void>;
+
+  beforeEach(async () => {
+    ({ rollback } = await startTransaction());
   });
 
   afterEach(async () => {
-    await mysqlClient.destroy();
+    await rollback();
   });
 
-  afterAll(() => {
+  afterAll(async () => {
+    await mysqlClient.destroy();
     unPatch();
   });
 
+  it('insert', async () => {
+    await mysqlClient
+      .insertInto('employee')
+      .values({ first_name: 'Test', last_name: 'Test', age: 35, sex: 'man', income: 23405 })
+      .execute();
+    const result = await mysqlClient.selectFrom('employee').selectAll('employee').execute();
+
+    expect(result).toHaveLength(4);
+  });
+
+  it('update', async () => {
+    const result = await mysqlClient
+      .selectFrom('employee')
+      .select(['id', 'age'])
+      .where('first_name', '=', 'Lisa')
+      .limit(1)
+      .execute();
+    expect(result).toHaveLength(1);
+
+    await mysqlClient
+      .updateTable('employee')
+      .set({ age: sql`age + 1` })
+      .where('id', '=', result[0].id)
+      .execute();
+    const result2 = await mysqlClient
+      .selectFrom('employee')
+      .select(['id', 'age'])
+      .where('first_name', '=', 'Lisa')
+      .limit(1)
+      .executeTakeFirstOrThrow();
+    expect(result2.age).toBe(result[0].age + 1);
+  });
+
+  it('delete', async () => {
+    await mysqlClient.deleteFrom('employee').execute();
+    const result = await mysqlClient.selectFrom('employee').select('employee.id').execute();
+    expect(result).toHaveLength(0);
+  });
+
   it('insert: commit', async () => {
-    ({ rollback } = await startTransaction());
     await mysqlClient.transaction().execute(async (trx) => {
       return await trx
         .insertInto('employee')
@@ -29,15 +70,9 @@ describe('[kysely]: queries with transaction', () => {
     });
     const result = await mysqlClient.selectFrom('employee').selectAll('employee').execute();
     expect(result).toHaveLength(4);
-
-    await rollback();
-
-    const result2 = await mysqlClient.selectFrom('employee').selectAll('employee').execute();
-    expect(result2).toHaveLength(3);
   });
 
   it('insert: rollback', async () => {
-    ({ rollback } = await startTransaction());
     try {
       await mysqlClient.transaction().execute(async (trx) => {
         await trx
@@ -49,17 +84,10 @@ describe('[kysely]: queries with transaction', () => {
     } catch (error) {
       const result = await mysqlClient.selectFrom('employee').selectAll('employee').execute();
       expect(result).toHaveLength(3);
-
-      await rollback();
-
-      const result2 = await mysqlClient.selectFrom('employee').selectAll('employee').execute();
-      expect(result2).toHaveLength(3);
     }
   });
 
   it('insert: two parallel transcation, one commit, one rollback', async () => {
-    ({ rollback } = await startTransaction());
-
     await mysqlClient.transaction().execute(async (trx) => {
       await trx
         .insertInto('employee')
@@ -89,10 +117,5 @@ describe('[kysely]: queries with transaction', () => {
       .limit(1)
       .execute();
     expect(not_found).toHaveLength(0);
-
-    await rollback();
-
-    const result2 = await mysqlClient.selectFrom('employee').selectAll('employee').execute();
-    expect(result2).toHaveLength(3);
   });
 });

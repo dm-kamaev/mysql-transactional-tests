@@ -1,14 +1,11 @@
 import mysql from 'mysql2';
 
-
-// type Rows = mysql.OkPacket | mysql.RowDataPacket[] | mysql.ResultSetHeader[] | mysql.RowDataPacket[][] | mysql.OkPacket[] | mysql.ProcedureCallPacket;
 export default class MySQL2Client {
   private readonly _pool: mysql.Pool;
 
   constructor(config: mysql.ConnectionConfig) {
     this._pool = mysql.createPool(config);
   }
-
 
   query<T>(options: string | mysql.QueryOptions, values?: any): Promise<T[]> {
     return new Promise<T[]>((resolve, reject) => {
@@ -24,7 +21,9 @@ export default class MySQL2Client {
     });
   }
 
-  async beginTransaction({ isolationLevel }: { isolationLevel?: 'REPEATABLE READ' | 'SERIALIZABLE' | 'READ COMMITTED' | 'READ UNCOMMITTED' } = {}) {
+  async beginTransaction({
+    isolationLevel,
+  }: { isolationLevel?: 'REPEATABLE READ' | 'SERIALIZABLE' | 'READ COMMITTED' | 'READ UNCOMMITTED' } = {}) {
     const connection = await new Promise<mysql.PoolConnection>((resolve, reject) => {
       this._pool.getConnection(function (err, connection) {
         return err ? reject(err) : resolve(connection);
@@ -33,12 +32,12 @@ export default class MySQL2Client {
 
     if (isolationLevel) {
       await new Promise<void>((resolve, reject) => {
-        connection.query(`SET TRANSACTION ISOLATION LEVEL ${isolationLevel}`, (err) => err ? reject(err) : resolve());
+        connection.query(`SET TRANSACTION ISOLATION LEVEL ${isolationLevel}`, (err) => (err ? reject(err) : resolve()));
       });
     }
 
     return new Promise<Trx>((resolve, reject) => {
-      connection.beginTransaction(err => {
+      connection.beginTransaction((err) => {
         if (err) {
           connection.release();
           return reject(err);
@@ -53,11 +52,10 @@ export default class MySQL2Client {
   }
 }
 
-
 class Trx {
   private _status: 'pending' | 'commited' | 'rollbacked' | 'error' = 'pending';
+  // eslint-disable-next-line no-unused-vars
   constructor(public readonly connection: mysql.PoolConnection) {}
-
 
   query(options: string | mysql.QueryOptions, values?: any) {
     if (this._status !== 'pending') {
@@ -86,21 +84,23 @@ class Trx {
       connection.commit(function (err) {
         try {
           if (err) {
-            return me
-              .rollback()
-              // succes rollback
-              .then(() => {
-                err.stack = error_trace.stack + '\n' + err.stack;
-                connection.release();
-                return reject(err);
-              })
-              // if rollback is failed
-              .catch(err => {
-                err.stack = error_trace.stack + '\n' + err.stack;
-                me._status = 'error';
-                connection.release();
-                return reject(err);
-              });
+            return (
+              me
+                .rollback()
+                // succes rollback
+                .then(() => {
+                  err.stack = error_trace.stack + '\n' + err.stack;
+                  connection.release();
+                  return reject(err);
+                })
+                // if rollback is failed
+                .catch((err) => {
+                  err.stack = error_trace.stack + '\n' + err.stack;
+                  me._status = 'error';
+                  connection.release();
+                  return reject(err);
+                })
+            );
           } else {
             connection.release();
             resolve();
@@ -136,7 +136,6 @@ class Trx {
     });
   }
 }
-
 
 // const mysqlConfig = require('../mysql.config.json');
 // void async function () {

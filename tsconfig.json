@@ -11,20 +11,22 @@
       "jest"
     ],
     "outDir": "dist",
+    "declaration": true,
+    "declarationDir": "dist",
     "module": "CommonJS",
     "moduleResolution": "Node",
     "strict": true,
+    "noUnusedLocals": false,
     "noImplicitAny": false,
     "noImplicitThis": false,
     "strictPropertyInitialization": false,
     "allowJs": false,
-    "declaration": false,
-    "sourceMap": true,
+    "sourceMap": false,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
   },
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
   ]
 }

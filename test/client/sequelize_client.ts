@@ -10,39 +10,43 @@ export default async function sequelizeClient(config) {
     logging: false,
   });
 
-  const EmployeeModel = sequelize.define('employee', {
-    id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      primaryKey: true,
-      autoIncrement: true,
-      allowNull: false
+  const EmployeeModel = sequelize.define(
+    'employee',
+    {
+      id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        primaryKey: true,
+        autoIncrement: true,
+        allowNull: false,
+      },
+      first_name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      last_name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      age: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      sex: {
+        type: DataTypes.ENUM('man', 'woman'),
+        allowNull: false,
+      },
+      income: {
+        type: DataTypes.BIGINT,
+        allowNull: false,
+      },
     },
-    first_name: {
-      type: DataTypes.STRING,
-      allowNull: false
+    {
+      tableName: 'employee',
+      createdAt: false,
+      updatedAt: false,
+      // Other model options go here
     },
-    last_name: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    age: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-    },
-    sex: {
-      type: DataTypes.ENUM('man', 'woman'),
-      allowNull: false
-    },
-    income: {
-      type: DataTypes.BIGINT,
-      allowNull: false
-    }
-  }, {
-    tableName: 'employee',
-    createdAt: false,
-    updatedAt: false,
-    // Other model options go here
-  });
+  );
 
   await sequelize.authenticate();
   await sequelize.sync({ force: false, alter: false });

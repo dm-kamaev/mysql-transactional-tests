@@ -7,10 +7,16 @@ test_coverage:
 test_badge: test_coverage
 	npx jest-coverage-badges
 
-ci: check_ts
+ci: lint check_ts
 	mv test/mysql.config.ci.json test/mysql.config.json;
 	make test_coverage;
 	make build;
+
+lint:
+	npx eslint src/ test/;
+
+lint_fix:
+	npx eslint --fix src/ test/;
 
 check_ts:
 	npx tsc --noEmit;
@@ -18,9 +24,11 @@ check_ts:
 test:
 	npx jest;
 
-build:
+build: lint
 	rm -rf dist;
 	npx tsc
 	rm -rf dist/test dist/example;
+	mv dist/src/* dist;
+	rm -rf dist/src;
 
 .PHONY: test

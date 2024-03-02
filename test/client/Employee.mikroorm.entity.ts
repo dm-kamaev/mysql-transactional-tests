@@ -1,4 +1,4 @@
-import { Entity, Property, PrimaryKey, Enum } from "@mikro-orm/core";
+import { Entity, Property, PrimaryKey, Enum } from '@mikro-orm/core';
 
 enum Sex {
   MAN = 'man',
@@ -7,7 +7,6 @@ enum Sex {
 
 @Entity()
 export class Employee {
-
   @PrimaryKey()
   id!: number;
 

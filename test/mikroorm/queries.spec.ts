@@ -1,6 +1,7 @@
 import { startTransaction, unPatch } from '../../src/mysql2';
 import { Employee } from '../client/Employee.mikroorm.entity';
 import mikroORMClient, { EM } from '../client/mikroorm_client';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mysqlConfig = require('../mysql.config.json');
 
 describe('[mikroORM]: queries', () => {
@@ -22,7 +23,13 @@ describe('[mikroORM]: queries', () => {
 
   it('insert', async () => {
     ({ rollback } = await startTransaction());
-    const employee = mysqlClient.create(Employee, { first_name: 'Test', last_name: 'Test', age: 35, sex: 'man', income: 23405 });
+    const employee = mysqlClient.create(Employee, {
+      first_name: 'Test',
+      last_name: 'Test',
+      age: 35,
+      sex: 'man',
+      income: 23405,
+    });
     await mysqlClient.persistAndFlush(employee);
 
     const result = await mysqlClient.findAll(Employee, {});
@@ -36,24 +43,36 @@ describe('[mikroORM]: queries', () => {
 
   it('update', async () => {
     ({ rollback } = await startTransaction());
-    const result: { id: number, age: number }[] = await mysqlClient.findAll(Employee, { fields: ['id', 'age'], where: { first_name: 'Lisa' }, limit: 1 });
+    const result: { id: number; age: number }[] = await mysqlClient.findAll(Employee, {
+      fields: ['id', 'age'],
+      where: { first_name: 'Lisa' },
+      limit: 1,
+    });
     const { age } = result[0];
     expect(result).toHaveLength(1);
     result[0].age++;
     await mysqlClient.persistAndFlush(result[0]);
 
-    const result2: { id: number, age: number }[] = await mysqlClient.findAll(Employee, { fields: ['id', 'age'], where: { first_name: 'Lisa' }, limit: 1 });
-    expect(result2[0].age).toBe(age+1);
+    const result2: { id: number; age: number }[] = await mysqlClient.findAll(Employee, {
+      fields: ['id', 'age'],
+      where: { first_name: 'Lisa' },
+      limit: 1,
+    });
+    expect(result2[0].age).toBe(age + 1);
 
     await rollback();
 
-    const result3: { id: number, age: number }[] = await mysqlClient.findAll(Employee, { fields: ['id', 'age'], where: { first_name: 'Lisa' }, limit: 1 });
+    const result3: { id: number; age: number }[] = await mysqlClient.findAll(Employee, {
+      fields: ['id', 'age'],
+      where: { first_name: 'Lisa' },
+      limit: 1,
+    });
     expect(result3[0].age).toEqual(age);
   });
 
   it('delete', async () => {
     ({ rollback } = await startTransaction());
-    const list: { id: number, age: number }[] = await mysqlClient.findAll(Employee, {});
+    const list: { id: number; age: number }[] = await mysqlClient.findAll(Employee, {});
     await mysqlClient.remove(list);
     await mysqlClient.removeAndFlush(list);
 
@@ -65,5 +84,4 @@ describe('[mikroORM]: queries', () => {
     const result2 = await mysqlClient.findAll(Employee, {});
     expect(result2).toHaveLength(3);
   });
-
 });

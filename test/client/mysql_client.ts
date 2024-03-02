@@ -10,14 +10,12 @@ interface IPoolConnection extends mysql.PoolConnection {
   q: IQueryFunction;
 }
 
-
 export default class MySQLClient {
   private readonly _pool: mysql.Pool;
 
   constructor(config: mysql.PoolConfig) {
     this._pool = mysql.createPool(config);
   }
-
 
   async query<T = unknown>(options: string | mysql.QueryOptions, values?: any): Promise<T> {
     const connection = await this.getConnection();
@@ -46,17 +44,19 @@ export default class MySQLClient {
     return output;
   }
 
-  async beginTransaction({ isolationLevel }: { isolationLevel?: 'REPEATABLE READ' | 'SERIALIZABLE' | 'READ COMMITTED' | 'READ UNCOMMITTED' } = {}) {
+  async beginTransaction({
+    isolationLevel,
+  }: { isolationLevel?: 'REPEATABLE READ' | 'SERIALIZABLE' | 'READ COMMITTED' | 'READ UNCOMMITTED' } = {}) {
     const connection = await this.getConnection();
 
-     if (isolationLevel) {
+    if (isolationLevel) {
       await new Promise<void>((resolve, reject) => {
-        connection.query(`SET TRANSACTION ISOLATION LEVEL ${isolationLevel}`, (err) => err ? reject(err) : resolve());
+        connection.query(`SET TRANSACTION ISOLATION LEVEL ${isolationLevel}`, (err) => (err ? reject(err) : resolve()));
       });
     }
 
     return new Promise<Trx>((resolve, reject) => {
-      connection.beginTransaction(err => {
+      connection.beginTransaction((err) => {
         if (err) {
           connection.release();
           return reject(err);
@@ -71,11 +71,10 @@ export default class MySQLClient {
   }
 }
 
-
 class Trx {
   private _status: 'pending' | 'commited' | 'rollbacked' | 'error' = 'pending';
-  constructor(public readonly connection: IPoolConnection) {}
 
+  constructor(public readonly connection: IPoolConnection) {}
 
   query<T = unknown>(options: string | mysql.QueryOptions, values?: any): Promise<T> {
     if (this._status !== 'pending') {
@@ -97,21 +96,23 @@ class Trx {
       connection.commit(function (err) {
         try {
           if (err) {
-            return me
-              .rollback()
-              // succes rollback
-              .then(() => {
-                err.stack = error_trace.stack + '\n' + err.stack;
-                connection.release();
-                return reject(err);
-              })
-              // if rollback is failed
-              .catch(err => {
-                err.stack = error_trace.stack + '\n' + err.stack;
-                me._status = 'error';
-                connection.release();
-                return reject(err);
-              });
+            return (
+              me
+                .rollback()
+                // succes rollback
+                .then(() => {
+                  err.stack = error_trace.stack + '\n' + err.stack;
+                  connection.release();
+                  return reject(err);
+                })
+                // if rollback is failed
+                .catch((err) => {
+                  err.stack = error_trace.stack + '\n' + err.stack;
+                  me._status = 'error';
+                  connection.release();
+                  return reject(err);
+                })
+            );
           } else {
             connection.release();
             resolve();
@@ -132,7 +133,6 @@ class Trx {
     const connection = this.connection;
     return new Promise<void>((resolve, reject) => {
       connection.rollback(function (err) {
-        // console.dir(connection, { depth: 4, colors: true });
         try {
           connection.release();
           me._status = 'rollbacked';
@@ -147,4 +147,3 @@ class Trx {
     });
   }
 }
-

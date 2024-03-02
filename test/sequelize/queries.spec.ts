@@ -1,5 +1,6 @@
-import { startTransaction, unPatch, setDebug } from '../../src/mysql2';
+import { startTransaction, unPatch } from '../../src/mysql2';
 import sequelizeClient, { Sequelize } from '../client/sequelize_client';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mysqlConfig = require('../mysql.config.json');
 
 describe('[sequelize]: queries', () => {
@@ -33,16 +34,28 @@ describe('[sequelize]: queries', () => {
 
   it('update', async () => {
     ({ rollback } = await startTransaction());
-    const result: { id: number, age: number }[] = await EmployeeModel.findAll({ attributes: ['id', 'age'], where: { first_name: 'Lisa' }, limit: 1 });
+    const result: { id: number; age: number }[] = await EmployeeModel.findAll({
+      attributes: ['id', 'age'],
+      where: { first_name: 'Lisa' },
+      limit: 1,
+    });
     const { id, age } = result[0];
     expect(result).toHaveLength(1);
     await EmployeeModel.increment('age', { where: { id } });
-    const result2: { id: number, age: number }[] = await EmployeeModel.findAll({ attributes: ['id', 'age'], where: { first_name: 'Lisa' }, limit: 1 });
-    expect(result2[0].age).toBe(age+1);
+    const result2: { id: number; age: number }[] = await EmployeeModel.findAll({
+      attributes: ['id', 'age'],
+      where: { first_name: 'Lisa' },
+      limit: 1,
+    });
+    expect(result2[0].age).toBe(age + 1);
 
     await rollback();
 
-    const result3: { id: number, age: number }[] = await EmployeeModel.findAll({ attributes: ['id', 'age'], where: { first_name: 'Lisa' }, limit: 1 });
+    const result3: { id: number; age: number }[] = await EmployeeModel.findAll({
+      attributes: ['id', 'age'],
+      where: { first_name: 'Lisa' },
+      limit: 1,
+    });
     expect(result3[0].age).toEqual(age);
   });
 
@@ -59,5 +72,4 @@ describe('[sequelize]: queries', () => {
     const result2 = await EmployeeModel.findAll();
     expect(result2).toHaveLength(3);
   });
-
 });

@@ -3,25 +3,54 @@ import MySQLClient from '../client/mysql2_client';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const mysqlConfig = require('../mysql.config.json');
 
-describe('[mysql2]: queries with transaction', () => {
-  let mysqlClient: MySQLClient;
-  let rollback;
-  const dbName = mysqlConfig.database;
+const dbName = mysqlConfig.database;
+const mysqlClient = new MySQLClient(mysqlConfig);
 
-  beforeEach(() => {
-    mysqlClient = new MySQLClient(mysqlConfig);
+describe('[mysql2]: transaction per test', () => {
+  let rollback: () => Promise<void>;
+
+  beforeEach(async () => {
+    ({ rollback } = await startTransaction());
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await rollback();
+  });
+
+  afterAll(async () => {
     mysqlClient.close();
-  });
-
-  afterAll(() => {
     unPatch();
   });
 
+  it('insert', async () => {
+    await mysqlClient.query(
+      `INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`,
+    );
+    const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
+    expect(result).toHaveLength(4);
+  });
+
+  it('update', async () => {
+    const result: { id: number; age: number }[] = await mysqlClient.query(
+      `SELECT * FROM ${dbName}.employee WHERE first_name = 'Lisa' LIMIT 1`,
+    );
+    const { id, age } = result[0];
+    expect(result).toHaveLength(1);
+
+    await mysqlClient.query(`UPDATE ${dbName}.employee SET age=age+1 WHERE id = ${id}`);
+    const result2: { id: number; age: number }[] = await mysqlClient.query(
+      `SELECT * FROM ${dbName}.employee WHERE first_name = 'Lisa' LIMIT 1`,
+    );
+    expect(result2[0].age).toBe(age + 1);
+  });
+
+  it('delete', async () => {
+    await mysqlClient.query(`DELETE FROM ${dbName}.employee`);
+    const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
+    expect(result).toHaveLength(0);
+  });
+
   it('insert: commit', async () => {
-    ({ rollback } = await startTransaction());
     const trx = await mysqlClient.beginTransaction();
     await trx.query(
       `INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`,
@@ -29,15 +58,9 @@ describe('[mysql2]: queries with transaction', () => {
     await trx.commit();
     const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
     expect(result).toHaveLength(4);
-
-    await rollback();
-
-    const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-    expect(result2).toHaveLength(3);
   });
 
   it('insert: rollback', async () => {
-    ({ rollback } = await startTransaction());
     const trx = await mysqlClient.beginTransaction();
     await trx.query(
       `INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`,
@@ -45,15 +68,9 @@ describe('[mysql2]: queries with transaction', () => {
     await trx.rollback();
     const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
     expect(result).toHaveLength(3);
-
-    await rollback();
-
-    const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-    expect(result2).toHaveLength(3);
   });
 
   it('insert: two parallel transcation, one commit, one rollback', async () => {
-    ({ rollback } = await startTransaction());
     const trx1 = await mysqlClient.beginTransaction();
     const trx2 = await mysqlClient.beginTransaction();
 
@@ -72,10 +89,5 @@ describe('[mysql2]: queries with transaction', () => {
 
     const not_found = await mysqlClient.query(`SELECT * FROM ${dbName}.employee WHERE first_name='Test2' LIMIT 1`);
     expect(not_found).toHaveLength(0);
-
-    await rollback();
-
-    const result2 = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-    expect(result2).toHaveLength(3);
   });
 });

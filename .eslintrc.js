@@ -1,24 +1,25 @@
 module.exports = {
   root: true,
   env: {
-    es6: true,
     node: true,
     jest: true,
-    browser: true,
-    jquery: false,
+    commonjs: true,
+    es2021: true,
   },
   parser: '@typescript-eslint/parser',
-  plugins: ['promise', 'no-unsafe-regex', 'new-with-error', '@typescript-eslint', 'prettier'],
+  plugins: ['@typescript-eslint', 'prettier', 'promise', 'no-unsafe-regex', 'new-with-error'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:promise/recommended',
+    'plugin:prettier/recommended',
     'prettier',
   ],
   parserOptions: {
-    ecmaVersion: 9,
-    sourceType: 'module',
+    ecmaVersion: 'latest',
+    tsconfigRootDir: __dirname,
+    project: './tsconfig.json',
   },
   rules: {
     'max-len': [
@@ -30,7 +31,7 @@ module.exports = {
         ignoreUrls: true,
       },
     ],
-    indent: ['error', 2, { SwitchCase: 1, ignoredNodes: ['TemplateLiteral *'] }],
+    indent: ['error', 2, { SwitchCase: 1, ignoredNodes: ['TemplateLiteral *', 'PropertyDefinition'] }],
     'linebreak-style': ['error', 'unix'],
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
@@ -77,6 +78,7 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': ['off'],
     '@typescript-eslint/explicit-module-boundary-types': ['off'],
     '@typescript-eslint/no-this-alias': ['off'],
+    'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': [
       'error',
       {
@@ -84,8 +86,5 @@ module.exports = {
         argsIgnorePattern: '_',
       },
     ],
-
-    // prettier
-    // 'prettier/prettier': 2, // Means error
   },
 };

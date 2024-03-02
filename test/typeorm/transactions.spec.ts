@@ -1,8 +1,8 @@
 import { startTransaction, unPatch } from '../../src/mysql';
 import { Employee } from '../client/Employee.typeorm.entity';
 import typeORMClient, { DataSource } from '../client/typeorm_client';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mysqlConfig = require('../mysql.config.json');
-
 
 describe('[typeorm]: queries with transaction', () => {
   let mysqlClient: DataSource;
@@ -13,14 +13,12 @@ describe('[typeorm]: queries with transaction', () => {
   });
 
   afterEach(async () => {
-    await mysqlClient.close();
+    await mysqlClient.destroy();
   });
-
 
   afterAll(() => {
     unPatch();
   });
-
 
   it('insert: commit', async () => {
     ({ rollback } = await startTransaction());
@@ -45,7 +43,6 @@ describe('[typeorm]: queries with transaction', () => {
     expect(result2).toHaveLength(3);
   });
 
-
   it('insert: rollback (cb trx)', async () => {
     ({ rollback } = await startTransaction());
     const employeeRepo = mysqlClient.getRepository(Employee);
@@ -59,7 +56,7 @@ describe('[typeorm]: queries with transaction', () => {
         employee.sex = 'man';
         employee.income = 23405;
         await employeeRepo.save(employee);
-        throw Error('Test Rollback');
+        throw new Error('Test Rollback');
       });
     } catch (err) {
       const result = await employeeRepo.find();
@@ -102,7 +99,6 @@ describe('[typeorm]: queries with transaction', () => {
 
     await trx2.manager.save(employee);
 
-
     await trx2.rollbackTransaction();
     await trx1.commitTransaction();
 
@@ -110,7 +106,7 @@ describe('[typeorm]: queries with transaction', () => {
     expect(result).toHaveLength(4);
     await trx1.release();
 
-    const not_found = await employeeRepo.find({ where: { 'first_name': 'Test2' } });
+    const not_found = await employeeRepo.find({ where: { first_name: 'Test2' } });
     expect(not_found).toHaveLength(0);
 
     await rollback();
@@ -118,5 +114,4 @@ describe('[typeorm]: queries with transaction', () => {
     const result2 = await employeeRepo.find();
     expect(result2).toHaveLength(3);
   });
-
 });

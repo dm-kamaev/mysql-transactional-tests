@@ -3,7 +3,7 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   transformIgnorePatterns: ['^.+\\.js$'],
-  modulePathIgnorePatterns: ['ptm'],
+  // modulePathIgnorePatterns: ['ptm'],
 
   bail: 1,
   verbose: true,

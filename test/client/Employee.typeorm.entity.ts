@@ -1,5 +1,5 @@
-import "reflect-metadata";
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import 'reflect-metadata';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 enum Sex {
   MAN = 'man',
@@ -8,7 +8,6 @@ enum Sex {
 
 @Entity()
 export class Employee {
-
   @PrimaryGeneratedColumn()
   id!: number;
 

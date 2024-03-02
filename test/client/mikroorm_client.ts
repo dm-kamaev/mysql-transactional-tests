@@ -15,7 +15,6 @@ export default async function mikroORMClient(config) {
   return { em: orm.em.fork(), orm };
 }
 
-
 // void async function main() {
 //   const { em: mysqlClient, orm } = await mikroORMClient(require('../mysql.config.json'));
 //   const list = await mysqlClient.find(Employee, {});

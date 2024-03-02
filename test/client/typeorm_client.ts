@@ -18,7 +18,6 @@ export default async function typeORMClient(config) {
   return myDataSource.initialize();
 }
 
-
 // const mysqlConfig = require('../mysql.config.json');
 // void async function example() {
 //   const mysqlClient = await typeORMClient(mysqlConfig);

@@ -1,19 +1,10 @@
 import { createPool } from 'mysql2';
-import { Kysely, MysqlDialect } from 'kysely'
+import { Kysely, MysqlDialect } from 'kysely';
 
-import {
-  Generated,
-  Insertable,
-  Selectable,
-  Updateable
-} from 'kysely'
-
-export interface Database {
-  employee: EmployeeTable
-}
+import { Generated, Insertable, Selectable, Updateable } from 'kysely';
 
 export interface EmployeeTable {
-  id: Generated<number>
+  id: Generated<number>;
 
   first_name: string;
   last_name: string;
@@ -22,9 +13,13 @@ export interface EmployeeTable {
   income: number;
 }
 
-export type Employee = Selectable<EmployeeTable>
-export type Createmployee = Insertable<EmployeeTable>
-export type UpdateEmployee = Updateable<EmployeeTable>
+export interface Database {
+  employee: EmployeeTable;
+}
+
+export type Employee = Selectable<EmployeeTable>;
+export type Createmployee = Insertable<EmployeeTable>;
+export type UpdateEmployee = Updateable<EmployeeTable>;
 
 export type KyselyClient = Kysely<Database>;
 
@@ -33,11 +28,11 @@ export type KyselyClient = Kysely<Database>;
 export default function (config) {
   // if (!dialect) {
   const dialect = new MysqlDialect({
-      pool: createPool(config)
-    });
+    pool: createPool(config),
+  });
   // }
 
   return new Kysely<Database>({
     dialect,
   });
-};
+}

@@ -1,5 +1,6 @@
-import { startTransaction, unPatch, setDebug } from '../../src/mysql';
+import { startTransaction, unPatch } from '../../src/mysql';
 import MySQLClient from '../client/mysql_client';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mysqlConfig = require('../mysql.config.json');
 
 describe('[mysql]: queries with transaction (manual)', () => {
@@ -19,12 +20,13 @@ describe('[mysql]: queries with transaction (manual)', () => {
     unPatch();
   });
 
-
   it('insert: commit', async () => {
     ({ rollback } = await startTransaction());
     const connection = await mysqlClient.getConnection({ autoRelease: false });
     await connection.q('START TRANSACTION');
-    await connection.q(`INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`);
+    await connection.q(
+      `INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`,
+    );
     await connection.q('COMMIT');
     const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
     expect(result).toHaveLength(4);
@@ -39,7 +41,9 @@ describe('[mysql]: queries with transaction (manual)', () => {
     ({ rollback } = await startTransaction());
     const connection = await mysqlClient.getConnection({ autoRelease: false });
     await connection.q('START TRANSACTION');
-    await connection.q(`INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`);
+    await connection.q(
+      `INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`,
+    );
     await connection.q('ROLLBACK');
     const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
     expect(result).toHaveLength(3);
@@ -58,8 +62,12 @@ describe('[mysql]: queries with transaction (manual)', () => {
     await connection1.q('START TRANSACTION');
     await connection2.q('START TRANSACTION');
 
-    await connection1.q(`INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`);
-    await connection2.q(`INSERT INTO ${dbName}.employee SET first_name='Test2', last_name='Test2', age=45, sex='woman', income=11000`);
+    await connection1.q(
+      `INSERT INTO ${dbName}.employee SET first_name='Test', last_name='Test', age=35, sex='man', income=23405`,
+    );
+    await connection2.q(
+      `INSERT INTO ${dbName}.employee SET first_name='Test2', last_name='Test2', age=45, sex='woman', income=11000`,
+    );
 
     await connection2.q('ROLLBACK');
     await connection1.q('COMMIT');

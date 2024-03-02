@@ -1,6 +1,7 @@
 import { startTransaction, unPatch } from '../../src/mysql';
 import type knex from 'knex';
 import knexClient from '../client/knex_mysql_client';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mysqlConfig = require('../mysql.config.json');
 
 describe('[knex mysql]: queries', () => {
@@ -19,7 +20,6 @@ describe('[knex mysql]: queries', () => {
     unPatch();
   });
 
-
   it('insert', async () => {
     ({ rollback } = await startTransaction());
     await mysqlClient('employee').insert({ first_name: 'Test', last_name: 'Test', age: 35, sex: 'man', income: 23405 });
@@ -34,16 +34,25 @@ describe('[knex mysql]: queries', () => {
 
   it('update', async () => {
     ({ rollback } = await startTransaction());
-    const result: { id: number, age: number }[] = await mysqlClient('employee').select('*').where('first_name', '=', 'Lisa').limit(1);
+    const result: { id: number; age: number }[] = await mysqlClient('employee')
+      .select('*')
+      .where('first_name', '=', 'Lisa')
+      .limit(1);
     const { id, age } = result[0];
     expect(result).toHaveLength(1);
     await mysqlClient('employee').increment('age', 1).where({ id });
-    const result2: { id: number, age: number }[] = await mysqlClient('employee').select('*').where('first_name', '=', 'Lisa').limit(1);
-    expect(result2[0].age).toBe(age+1);
+    const result2: { id: number; age: number }[] = await mysqlClient('employee')
+      .select('*')
+      .where('first_name', '=', 'Lisa')
+      .limit(1);
+    expect(result2[0].age).toBe(age + 1);
 
     await rollback();
 
-    const result3: { id: number, age: number }[] = await mysqlClient('employee').select('*').where('first_name', '=', 'Lisa').limit(1);
+    const result3: { id: number; age: number }[] = await mysqlClient('employee')
+      .select('*')
+      .where('first_name', '=', 'Lisa')
+      .limit(1);
     expect(result3[0].age).toEqual(age);
   });
 
@@ -58,5 +67,4 @@ describe('[knex mysql]: queries', () => {
     const result2 = await mysqlClient('employee').select('*');
     expect(result2).toHaveLength(3);
   });
-
 });

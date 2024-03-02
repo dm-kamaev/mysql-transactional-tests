@@ -1,12 +1,12 @@
 import { startTransaction, unPatch } from '../../src/mysql2';
 import { Employee } from '../client/Employee.mikroorm.entity';
 import mikroORMClient, { EM } from '../client/mikroorm_client';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mysqlConfig = require('../mysql.config.json');
-
 
 describe('[mikroorm]: queries with transaction', () => {
   let mysqlClient: EM;
-    let orm;
+  let orm;
   let rollback;
 
   beforeEach(async () => {
@@ -17,11 +17,9 @@ describe('[mikroorm]: queries with transaction', () => {
     await orm.close();
   });
 
-
   afterAll(() => {
     unPatch();
   });
-
 
   it('insert: commit', async () => {
     ({ rollback } = await startTransaction());
@@ -44,7 +42,7 @@ describe('[mikroorm]: queries with transaction', () => {
     expect(result2).toHaveLength(3);
   });
 
-   it('insert: commit (cb trx)', async () => {
+  it('insert: commit (cb trx)', async () => {
     ({ rollback } = await startTransaction());
     await mysqlClient.transactional(async (em) => {
       const employee = new Employee();
@@ -98,10 +96,10 @@ describe('[mikroorm]: queries with transaction', () => {
         employee.sex = 'man';
         employee.income = 23405;
         em.persist(employee);
-        throw Error('Test Rollback');
+        throw new Error('Test Rollback');
       });
     } catch (err) {
-      const result =  await mysqlClient.findAll(Employee, {});
+      const result = await mysqlClient.findAll(Employee, {});
       expect(result).toHaveLength(3);
 
       await rollback();
@@ -110,5 +108,4 @@ describe('[mikroorm]: queries with transaction', () => {
       expect(result2).toHaveLength(3);
     }
   });
-
 });
