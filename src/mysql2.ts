@@ -58,6 +58,7 @@ mysql.createPool = function (config) {
         cb();
         return this;
       } else {
+        options.onQuery!(input[0]);
         return queryTrx!.apply(globalTrxConnection, input as any);
       }
     };

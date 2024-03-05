@@ -8,6 +8,7 @@ module.exports = {
   },
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'prettier', 'promise', 'no-unsafe-regex', 'new-with-error'],
+  ignorePatterns: ['.eslintrc.js'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/eslint-recommended',
