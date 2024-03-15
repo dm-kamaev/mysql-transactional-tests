@@ -27,7 +27,11 @@
     "mysql2 test",
     "test"
   ],
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dm-kamaev/mysql-transactional-tests"
+  },
+  "author": "Mitya Kamaev",
   "license": "ISC",
   "peerDependenciesMeta": {
     "mysql": {
