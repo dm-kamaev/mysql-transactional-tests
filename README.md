@@ -180,31 +180,31 @@ Based on the above, you can use this library with tests which sequenctly open/cl
 
 ```ts
 it('insert: two parallel transcation, one commit, one rollback', async () => {
-    // start two parallel transaction
-    const trx1 = await mysqlClient.beginTransaction();
-    const trx2 = await mysqlClient.beginTransaction();
+  // start two parallel transaction
+  const trx1 = await mysqlClient.beginTransaction();
+  const trx2 = await mysqlClient.beginTransaction();
 
-    await trx1.query(
-      `INSERT INTO ${dbName}.employee SET first_name='John', last_name='Brown', age=35, sex='man', income=23405`,
-    );
-    await trx2.query(
-      `INSERT INTO ${dbName}.employee SET first_name='Matthew', last_name='Black', age=45, sex='woman', income=11000`,
-    );
+  await trx1.query(
+    `INSERT INTO ${dbName}.employee SET first_name='John', last_name='Brown', age=35, sex='man', income=23405`,
+  );
+  await trx2.query(
+    `INSERT INTO ${dbName}.employee SET first_name='Matthew', last_name='Black', age=45, sex='woman', income=11000`,
+  );
 
-    // ✅
-    await trx2.rollback();
-    await trx1.commit();
+  // ✅
+  await trx2.rollback();
+  await trx1.commit();
 
-    // ❌
-    await trx1.commit();
-    await trx2.rollback();
+  // ❌
+  await trx1.commit();
+  await trx2.rollback();
 
-    const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
-    expect(result).toHaveLength(4);
+  const result = await mysqlClient.query(`SELECT * FROM ${dbName}.employee`);
+  expect(result).toHaveLength(4);
 
-    const notFound = await mysqlClient.query(`SELECT * FROM ${dbName}.employee WHERE first_name='Matthew' LIMIT 1`);
-    expect(notFound).toHaveLength(0);
-  });
+  const notFound = await mysqlClient.query(`SELECT * FROM ${dbName}.employee WHERE first_name='Matthew' LIMIT 1`);
+  expect(notFound).toHaveLength(0);
+});
 ```
 
 ### Debug and Isolation Level
@@ -218,8 +218,8 @@ setDebug(true);
 
 You can set isolation level for transaction:
 ```ts
-  beforeEach(async () => {
-    // Start transaction before each test
-    ({ rollback } = await startTransaction({ isolationLevel: 'READ UNCOMMITTED' }));
-  });
+beforeEach(async () => {
+  // Start transaction before each test
+  ({ rollback } = await startTransaction({ isolationLevel: 'READ UNCOMMITTED' }));
+});
 ```
