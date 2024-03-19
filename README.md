@@ -21,7 +21,11 @@ Library supported:
 
 ### Install
 ```sh
-npm i mysql-transactional-tests -S
+npm i mysql-transactional-tests -S;
+
+# you had install one of this driver:
+npm i mysql -S;
+npm i mysql2 -S;
 ```
 
 ### Example

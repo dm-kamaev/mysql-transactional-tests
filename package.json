@@ -1,6 +1,6 @@
 {
   "name": "mysql-transactional-tests",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Wraps each test in transaction for mysql database (driver `mysql` and `mysql2`)",
   "scripts": {
     "test": "make test"
