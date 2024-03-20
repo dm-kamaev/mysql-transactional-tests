@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "mysql",
+    "declaration": true,
+    "declarationDir": "mysql"
+  },
+  "include": ["src/mysql"]
+}

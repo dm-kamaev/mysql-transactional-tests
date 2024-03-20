@@ -1,5 +1,5 @@
-import mysql from 'mysql';
-import { IsolationLevel } from './lib';
+import mysql from 'mysql2';
+import { IsolationLevel } from '../lib';
 export declare function startTransaction({ isolationLevel, onQuery, }?: {
     isolationLevel?: IsolationLevel;
     onQuery?: (input: string | mysql.QueryOptions) => void;

@@ -24,11 +24,24 @@ check_ts:
 test:
 	npx jest;
 
+# build: lint
+# 	rm -rf dist;
+# 	npx tsc
+# 	rm -rf dist/test dist/example;
+# 	mv dist/src/* dist;
+# 	rm -rf dist/src;
+
 build: lint
-	rm -rf dist;
-	npx tsc
-	rm -rf dist/test dist/example;
-	mv dist/src/* dist;
-	rm -rf dist/src;
+	rm -rf mysql mysql2;
+	echo "Building MySQL ===>";
+	npx tsc -p tsconfig.mysql.json;
+	mv mysql/mysql/* mysql;
+	rm -rf mysql/mysql;
+
+	echo "Building MySQL2 ===>";
+	npx tsc -p tsconfig.mysql2.json;
+	mv mysql2/mysql2/* mysql2;
+	rm -rf mysql2/mysql2;
+
 
 .PHONY: test

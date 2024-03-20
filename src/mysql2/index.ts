@@ -1,5 +1,5 @@
 import mysql from 'mysql2';
-import { extractSqlQuery, getAllPropsOfObj, IsolationLevel } from './lib';
+import { extractSqlQuery, getAllPropsOfObj, IsolationLevel } from '../lib';
 
 type QueryOptions =
   | [options?: mysql.QueryOptions | undefined, callback?: ((err: mysql.QueryError) => void) | undefined]

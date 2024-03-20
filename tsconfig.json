@@ -28,5 +28,7 @@
   "exclude": [
     "node_modules",
     "dist",
+    "mysql",
+    "mysql2"
   ]
 }
